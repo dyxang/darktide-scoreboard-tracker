@@ -40,6 +40,7 @@ const MISSION_NAMES = {
   'op_train': 'Rolling Steel',
   'op_no_mans_land': 'Battle for Tertium',
   'hub_ship': 'Mourningstar (Hub)',
+  'exp_wastes': 'Expeditions',
   'psykhanium': 'Mortis Trials',
 };
 

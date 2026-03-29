@@ -366,9 +366,15 @@ function getProperties() {
 
 /** Query distinct missions, difficulties, modifiers, and time range for filter dropdowns. */
 function getFilters() {
+  const MISSION_SORT_ORDER = { 'psykhanium': 0, 'exp_wastes': 1 };
   const missions = queryRows(
     "SELECT DISTINCT mission_id, mission_name FROM games WHERE mission_id != '' ORDER BY mission_name"
-  ).map(r => ({ id: r.mission_id, name: r.mission_name }));
+  ).map(r => ({ id: r.mission_id, name: r.mission_name }))
+   .sort((a, b) => {
+     const oa = MISSION_SORT_ORDER[a.id] ?? 2;
+     const ob = MISSION_SORT_ORDER[b.id] ?? 2;
+     return oa !== ob ? oa - ob : a.name.localeCompare(b.name);
+   });
 
   const difficulties = queryRows(
     'SELECT DISTINCT difficulty FROM games ORDER BY difficulty'
