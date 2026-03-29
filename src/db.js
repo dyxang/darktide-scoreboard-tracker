@@ -312,7 +312,7 @@ function insertGame(game) {
 function getProperties() {
   const rows = queryRows(
     `SELECT id, display_name, group_id, group_name, sort_direction, is_summary, parent_id, row_order, visible
-     FROM properties ORDER BY row_order`
+     FROM properties WHERE visible = 1 ORDER BY row_order`
   );
 
   const allProps = {};

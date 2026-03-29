@@ -173,11 +173,22 @@ function cleanDisplayName(name) {
     }
     return inner;
   }
-  return name;
+  return name.replace(/\s+/g, ' ').trim();
 }
 
 /** Disambiguate a single-word child property name using its parent's display name. */
 function expandChildDisplayName(childDisplay, parentDisplay, siblingDisplays) {
+  // Bracket format: "Total Melee [ Kills | Damage ]" → prefix "Total Melee"
+  const bracketMatch = parentDisplay.match(/^(.+?)\s*\[.+\]\s*$/);
+  if (bracketMatch) {
+    const prefix = bracketMatch[1].trim();
+    if (prefix && childDisplay.split(' ').length === 1) {
+      return `${prefix} ${childDisplay}`;
+    }
+    return childDisplay;
+  }
+
+  // Old slash format: "Metal / Diamantine collected"
   if (childDisplay.split(' ').length > 1) return childDisplay;
   const regex = new RegExp('\\b' + childDisplay.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
   if (!regex.test(parentDisplay)) return childDisplay;

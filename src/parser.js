@@ -58,7 +58,7 @@ function parseRowSection(lines, lineIndex, line, game, knownPlayerIds, currentGr
   const parentId = parentIdRaw === 'nil' ? null : parentIdRaw;
   const childIds = childIdsRaw === 'nil' ? null : childIdsRaw;
   const isSummary = childIds !== null && childIds.includes(':');
-  const visible = flagField !== 'false';
+  const visible = flagField !== 'false' && displayName.trim() !== '';
 
   game.propertyMetadata[rowId] = {
     displayName, groupId: currentGroupId, groupName: currentGroupName,
