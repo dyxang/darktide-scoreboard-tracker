@@ -69,8 +69,8 @@ const MISSION_NAMES_ZH = {
   'op_train': '钢轮滚滚',
   'op_no_mans_land': 'Battle for Tertium',
   'hub_ship': 'Mourningstar (Hub)',
-  'exp_wastes': 'Expeditions',
-  'psykhanium': 'Mortis Trials',
+  'exp_wastes': '远征',
+  'psykhanium': '死灵试炼',
 };
 
 const DEFAULT_DIFFICULTY_NAMES = {
