@@ -6,7 +6,21 @@
 'use strict';
 const App = window.App = window.App || {};
 
-const { MISSION_NAMES, DEFAULT_DIFFICULTY_NAMES, LONG_GAME_THRESHOLD_SECONDS } = App;
+const { MISSION_NAMES, MISSION_NAMES_ZH, DEFAULT_DIFFICULTY_NAMES, DEFAULT_DIFFICULTY_NAMES_ZH, LONG_GAME_THRESHOLD_SECONDS } = App;
+
+function getTranslatedMissionName(missionId) {
+  if (window.App.i18n && window.App.i18n.getLanguage() === 'zh') {
+    return MISSION_NAMES_ZH[missionId] || MISSION_NAMES[missionId] || missionId;
+  }
+  return MISSION_NAMES[missionId] || missionId;
+}
+
+function getTranslatedDifficultyName(difficultyId) {
+  if (App.i18n && App.i18n.getLanguage() === 'zh') {
+    return DEFAULT_DIFFICULTY_NAMES_ZH[difficultyId] || DEFAULT_DIFFICULTY_NAMES[difficultyId] || String(difficultyId);
+  }
+  return DEFAULT_DIFFICULTY_NAMES[difficultyId] || String(difficultyId);
+}
 
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS games (
@@ -368,8 +382,8 @@ function getProperties() {
 function getFilters() {
   const MISSION_SORT_ORDER = { 'psykhanium': 0, 'exp_wastes': 1 };
   const missions = queryRows(
-    "SELECT DISTINCT mission_id, mission_name FROM games WHERE mission_id != '' ORDER BY mission_name"
-  ).map(r => ({ id: r.mission_id, name: r.mission_name }))
+    "SELECT DISTINCT mission_id, mission_name FROM games WHERE mission_id != ''"
+  ).map(r => ({ id: r.mission_id, name: getTranslatedMissionName(r.mission_id) }))
    .sort((a, b) => {
      const oa = MISSION_SORT_ORDER[a.id] ?? 2;
      const ob = MISSION_SORT_ORDER[b.id] ?? 2;
@@ -378,7 +392,7 @@ function getFilters() {
 
   const difficulties = queryRows(
     'SELECT DISTINCT difficulty FROM games ORDER BY difficulty'
-  ).map(r => ({ id: r.difficulty, name: DEFAULT_DIFFICULTY_NAMES[r.difficulty] || String(r.difficulty) }));
+  ).map(r => ({ id: r.difficulty, name: getTranslatedDifficultyName(r.difficulty) }));
 
   const modifiers = queryRows(
     "SELECT DISTINCT modifier FROM games WHERE modifier != '' ORDER BY modifier"
@@ -629,4 +643,6 @@ App.getAppSetting = getAppSetting;
 App.clearAppSettings = clearAppSettings;
 App.autoSetupDefaultPlayer = autoSetupDefaultPlayer;
 App.getGameCount = getGameCount;
+App.getTranslatedMissionName = getTranslatedMissionName;
+App.getTranslatedDifficultyName = getTranslatedDifficultyName;
 })();

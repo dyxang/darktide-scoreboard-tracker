@@ -47,6 +47,7 @@
     return loadScript('src/constants.js');
   })
   .then(function() { return loadScript('src/utils.js'); })
+  .then(function() { return loadScript('src/i18n.js'); })
   .then(function() { return loadScript('src/components.js'); })
   .then(function() { return loadScript('src/db.js'); })
   .then(function() { return loadScript('src/parser.js'); })
@@ -61,13 +62,14 @@
 })();
 </script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2SKXX23BZK"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
 
-  gtag('config', 'G-2SKXX23BZK');
-</script>
+    gtag('config', 'G-2SKXX23BZK');
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 <noscript>
@@ -79,10 +81,10 @@
   <!-- Path hint overlay (Windows only) -->
   <div v-if="showPathHint" class="path-hint-overlay" @click="dismissPathHint">
     <div class="path-hint-text">
-      <p>The default location of scoreboard files is:</p>
+      <p>{{ t('The default location of scoreboard files is:') }}</p>
       <code>%APPDATA%\Fatshark\Darktide\scoreboard_history</code>
-      <p class="path-hint-example">Example: <code>C:\Users\YourName\AppData\Roaming\Fatshark\Darktide\scoreboard_history</code></p>
-      <p class="path-hint-dismiss">Click anywhere to dismiss</p>
+      <p class="path-hint-example">{{ t('Example:') }} <code>C:\Users\YourName\AppData\Roaming\Fatshark\Darktide\scoreboard_history</code></p>
+      <p class="path-hint-dismiss">{{ t('Click anywhere to dismiss') }}</p>
     </div>
   </div>
 
@@ -90,28 +92,28 @@
   <div class="ingest-bar">
     <template v-if="hasNativeAccess">
       <button @click="pickDirectory" :disabled="ingesting || !dbReady" :class="{ 'pulse-red': gameCountDisplay === 0 && !ingesting && dbReady }">
-        {{ dirHandle ? 'Change Directory' : 'Choose Scoreboard Directory' }}
+        {{ dirHandle ? t('Change Directory') : t('Choose Scoreboard Directory') }}
       </button>
       <button v-if="dirHandle" @click="reingest" :disabled="ingesting">
-        Re-scan Files
+        {{ t('Re-scan Files') }}
       </button>
     </template>
     <button v-else @click="pickFiles" :disabled="ingesting || !dbReady" :class="{ 'pulse-red': gameCountDisplay === 0 && !ingesting && dbReady }">
-      Import Scoreboard Files
+      {{ t('Import Scoreboard Files') }}
     </button>
     <span v-if="!hasNativeAccess" class="fallback-warning tooltip-wrap tooltip-below"
-      data-tooltip="Your browser does not support the File System Access API. Automatic re-scanning is not available. Use Chrome, Opera, or Edge for full functionality.">&#9888;</span>
-    <span class="game-count">{{ gameCountDisplay }} games in database</span>
+      :data-tooltip="t('Your browser does not support the File System Access API. Automatic re-scanning is not available. Use Chrome, Opera, or Edge for full functionality.')">&#9888;</span>
+    <span class="game-count">{{ gameCountDisplay }} {{ t('games in database') }}</span>
     <span v-if="ingestProgress" class="progress-text">{{ ingestProgress }}</span>
-    <button class="btn-danger ml-auto" @click="resetSettings">Reset Settings</button>
-    <button class="btn-danger" @click="resetDatabase" :disabled="ingesting">Reset DB</button>
+    <button class="btn-danger ml-auto" @click="resetSettings">{{ t('Reset Settings') }}</button>
+    <button class="btn-danger" @click="resetDatabase" :disabled="ingesting">{{ t('Reset DB') }}</button>
   </div>
 
   <!-- Controls -->
   <div class="controls" v-if="dbReady">
     <div class="controls-row">
       <div class="control-group">
-        <label>Property</label>
+        <label>{{ t('Property') }}</label>
         <multi-select
           v-model="selectedPropertyIds"
           :display-label="selectedPropertyNames"
@@ -134,35 +136,35 @@
       </div>
 
       <div class="control-group">
-        <label>Range</label>
+        <label>{{ t('Range') }}</label>
         <select v-model="rangeMode">
-          <option value="all">All Time</option>
-          <option value="7d">Last 7 Days</option>
-          <option value="30d">Last 30 Days</option>
-          <option value="90d">Last 90 Days</option>
-          <option value="365d">Last 365 Days</option>
-          <option value="custom">Custom Dates</option>
-          <option value="last_n">Last N Games</option>
+          <option value="all">{{ t('All Time') }}</option>
+          <option value="7d">{{ t('Last 7 Days') }}</option>
+          <option value="30d">{{ t('Last 30 Days') }}</option>
+          <option value="90d">{{ t('Last 90 Days') }}</option>
+          <option value="365d">{{ t('Last 365 Days') }}</option>
+          <option value="custom">{{ t('Custom Dates') }}</option>
+          <option value="last_n">{{ t('Last N Games') }}</option>
         </select>
         <input type="text" ref="dateRangeInput" class="input-date-range"
-          placeholder="Select date range..." readonly
+          :placeholder="t('Select date range...')" readonly
           v-if="rangeMode === 'custom'">
         <input v-if="rangeMode === 'last_n'" type="number" v-model.number="lastNGames"
           min="1" max="10000" class="input-last-n" placeholder="N">
       </div>
 
       <div class="control-group">
-        <label>Result</label>
+        <label>{{ t('Result') }}</label>
         <select v-model="resultFilter">
-          <option value="all">All</option>
-          <option value="won">Won Only</option>
-          <option value="won_and_long_lost">Won and Lost 20+ minutes</option>
-          <option value="lost">Lost Only</option>
+          <option value="all">{{ t('All') }}</option>
+          <option value="won">{{ t('Won Only') }}</option>
+          <option value="won_and_long_lost">{{ t('Won and Lost 20+ minutes') }}</option>
+          <option value="lost">{{ t('Lost Only') }}</option>
         </select>
       </div>
 
       <div class="control-group">
-        <label>Difficulty</label>
+        <label>{{ t('Difficulty') }}</label>
         <multi-select
           v-model="selectedDifficulties"
           :display-label="difficultyLabel"
@@ -178,7 +180,7 @@
       </div>
 
       <div class="control-group">
-        <label>Mission</label>
+        <label>{{ t('Mission') }}</label>
         <multi-select
           v-model="selectedMissions"
           :display-label="missionLabel"
@@ -194,7 +196,7 @@
       </div>
 
       <div class="control-group">
-        <label>Modifier</label>
+        <label>{{ t('Modifier') }}</label>
         <multi-select
           v-model="selectedModifiers"
           :display-label="modifierLabel"
@@ -209,117 +211,139 @@
         </multi-select>
       </div>
 
+      <div class="control-group">
+        <label>{{ t('Language') }}</label>
+        <select v-model="currentLanguage" @change="changeLanguage(currentLanguage)">
+          <option value="en">{{ t('English') }}</option>
+          <option value="zh">{{ t('Chinese') }}</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>{{ t('Layout') }}</label>
+        <select v-model="layoutMode" @change="changeLayout(layoutMode)">
+          <option value="vertical">{{ t('Vertical') }}</option>
+          <option value="horizontal">{{ t('Horizontal') }}</option>
+        </select>
+      </div>
       <div class="control-group ml-auto">
         <button aria-label="Open player management" @click="showPlayerDialog = true">
-          Manage Players
+          {{ t('Manage Players') }}
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Error banner -->
-  <div v-if="errorMessage" class="error-banner">
-    <span>{{ errorMessage }}</span>
-    <button @click="errorMessage = ''">Dismiss</button>
-  </div>
+  <div :class="['main-content', { 'horizontal-layout': layoutMode === 'horizontal' }]">
+    <div class="left-content">
+      <!-- Error banner -->
+      <div v-if="errorMessage" class="error-banner">
+        <span>{{ errorMessage }}</span>
+        <button @click="errorMessage = ''">{{ t('Dismiss') }}</button>
+      </div>
 
-  <!-- Stats box -->
-  <div class="stats-box" v-if="(generalStatsData || statsData.length > 0) && trackedPlayers.length > 0">
-    <div class="stat-card" v-if="generalStatsData">
-      <div class="stat-card-title">General</div>
-      <div v-for="(playerStat, idx) in generalStatsData.players" :key="playerStat.playerId + '-' + idx"
-        :class="['stat-player-row', { 'stat-sub-row': playerStat._isSubName }]">
-        <div class="stat-color-dot" :style="{background: playerStat._isSubName ? playerStat._parentColor : playerStat.color}"></div>
-        <span class="stat-name">{{ playerStat.name }}</span>
-        <span class="stat-value" :data-tooltip="'Total playtime: ' + formatDuration(playerStat.totalPlaytime)">Time: {{ formatDuration(playerStat.totalPlaytime) }}</span>
-        <span class="stat-value">Games: {{ playerStat.totalGames }}</span>
-        <span class="stat-value stat-win-rate" v-if="showWinRate"
-          :data-tooltip="'Won ' + playerStat.wonGames + ' out of ' + playerStat.totalGames + ' games. Win rate: ' + playerStat.winRate + '%'">W&#8209;rate: {{ playerStat.winRate }}%</span>
-        <span class="stat-value stat-streaks" v-if="showStreaks" :data-tooltip="'Winning streak: ' + playerStat.winStreak + ' games\nLosing streak: ' + playerStat.lossStreak + ' games'">Streaks: <span class="streak-value"><span class="streak-win">{{ playerStat.winStreak }}</span> | <span class="streak-loss">{{ playerStat.lossStreak }}</span></span></span>
+      <!-- Stats box -->
+      <div class="stats-box" v-if="(generalStatsData || statsData.length > 0) && trackedPlayers.length > 0">
+        <div class="stat-card" v-if="generalStatsData">
+          <div class="stat-card-title">{{ t('General') }}</div>
+          <div v-for="(playerStat, idx) in generalStatsData.players" :key="playerStat.playerId + '-' + idx"
+            :class="['stat-player-row', { 'stat-sub-row': playerStat._isSubName }]">
+            <div class="stat-color-dot" :style="{background: playerStat._isSubName ? playerStat._parentColor : playerStat.color}"></div>
+            <span class="stat-name">{{ playerStat.name }}</span>
+            <span class="stat-value" :data-tooltip="t('Total playtime:') + ' ' + formatDuration(playerStat.totalPlaytime)">{{ t('Time:') }} {{ formatDuration(playerStat.totalPlaytime) }}</span>
+            <span class="stat-value">{{ t('Games:') }} {{ playerStat.totalGames }}</span>
+            <span class="stat-value stat-win-rate" v-if="showWinRate"
+              :data-tooltip="t('Won') + ' ' + playerStat.wonGames + ' ' + t('out of') + ' ' + playerStat.totalGames + ' ' + t('games. Win rate:') + ' ' + playerStat.winRate + '%'">{{ t('W&#8209;rate:') }} {{ playerStat.winRate }}%</span>
+            <span class="stat-value stat-streaks" v-if="showStreaks" :data-tooltip="t('Winning streak:') + ' ' + playerStat.winStreak + ' ' + t('games\nLosing streak:') + ' ' + playerStat.lossStreak + ' ' + t('games')">{{ t('Streaks:') }} <span class="streak-value"><span class="streak-win">{{ playerStat.winStreak }}</span> | <span class="streak-loss">{{ playerStat.lossStreak }}</span></span></span>
+          </div>
+        </div>
+        <div class="stat-card" v-if="relativeStatsData && (relativeStatsData.togetherPairs.length > 0 || relativeStatsData.apartPairs.length > 0)">
+          <div class="stat-card-title">{{ t('Relative') }}</div>
+          <div v-for="(pair, idx) in relativeStatsData.togetherPairs" :key="'together-' + idx" class="stat-player-row">
+            <div class="stat-color-dot" :style="{background: pair.colorA}"></div>
+            <div class="stat-color-dot" :style="{background: pair.colorB}"></div>
+            <span class="stat-name">{{ pair.nameA }} + {{ pair.nameB }}</span>
+            <span class="stat-value" :data-tooltip="t('Played') + ' ' + pair.gamesTogether + ' ' + t('games together')"> {{ t('Together:') }} {{ pair.gamesTogether }}</span>
+            <span class="stat-value" v-if="showWinRate" :data-tooltip="t('Win rate together:') + ' ' + pair.winRateTogether + '%'">{{ t('W&#8209;rate:') }} {{ pair.winRateTogether }}%</span>
+          </div>
+          <div v-for="(pair, idx) in relativeStatsData.apartPairs" :key="'apart-' + idx" class="stat-player-row">
+            <div class="stat-color-dot" :style="{background: pair.colorA}"></div>
+            <div class="stat-color-dot" :style="{background: pair.colorB}"></div>
+            <span class="stat-name">{{ pair.nameA }} &#8209; {{ pair.nameB }}</span>
+            <span class="stat-value" :data-tooltip="t('Played') + ' ' + pair.gamesApart + ' ' + t('games apart')"> {{ t('Apart:') }} {{ pair.gamesApart }}</span>
+            <span class="stat-value" v-if="showWinRate" :data-tooltip="t('Win rate apart:') + ' ' + pair.winRateApart + '%'">{{ t('W&#8209;rate:') }} {{ pair.winRateApart }}%</span>
+          </div>
+        </div>
+        <div class="stat-card" v-for="stat in statsData" :key="stat.propertyId">
+          <div class="stat-card-title">
+            {{ stat.propertyName }}
+            <span class="stat-card-close" role="button" aria-label="Remove property"
+              @click="removeProperty(stat.propertyId)">&times;</span>
+          </div>
+          <div v-for="(playerStat, idx) in stat.players" :key="playerStat.playerId + '-' + idx"
+            :class="['stat-player-row', { 'stat-sub-row': playerStat._isSubName }]">
+            <div class="stat-color-dot" :style="{background: playerStat._isSubName ? playerStat._parentColor : playerStat.color}"></div>
+            <span class="stat-name">{{ playerStat.name }}</span>
+            <span class="stat-value">{{ t('Avg:') }} {{ formatNum(playerStat.average) }}</span>
+            <span class="stat-value stat-top-in"
+              :data-tooltip="t('Was in first place in') + ' ' + playerStat.bestCount + ' ' + t('out of') + ' ' + playerStat.bestTotal + ' ' + t('games')"> {{ t('Top in:') }} {{ playerStat.bestPercent }}%</span>
+            <span v-if="!showVsOthers || playerStat.isMain"
+              class="stat-value" :class="deviationClass(playerStat.deviation, stat.sortAscending)"
+              :data-tooltip="'Was summarily ' + Math.abs(playerStat.deviation).toFixed(1) + '% ' + (deviationClass(playerStat.deviation, stat.sortAscending) === 'positive' ? t('better') : t('worse')) + ' ' + t('than average')">
+              {{ t('Avg dev:') }} {{ playerStat.deviation >= 0 ? '+' : '' }}{{ playerStat.deviation.toFixed(1) }}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graph toggles -->
+      <div class="graph-toggles" v-if="dbReady">
+        <button class="toggle-btn" :class="{on: perName}"
+          @click="perName = !perName">{{ t('Per name') }}</button>
+        <button class="toggle-btn" :class="{on: normalizePerMinute}"
+          @click="normalizePerMinute = !normalizePerMinute">{{ t('Per minute') }}</button>
+        <span class="toggle-spacer"></span>
+        <button class="toggle-btn" :class="{on: showVsAverage}"
+          :data-tooltip="t('Compare everyone to the whole team\'s average.')"
+          @click="showVsAverage = !showVsAverage; if(showVsAverage) showVsOthers = false">{{ t('vs Average') }}</button>
+        <button class="toggle-btn" :class="{on: showVsOthers}"
+          :disabled="!hasMainPlayer"
+          :data-tooltip="!hasMainPlayer ? t('Set a main player first') : t('Compare the main player to the average of the others.')"
+          @click="showVsOthers = !showVsOthers; if(showVsOthers) showVsAverage = false">{{ t('vs Others') }}</button>
+        <button class="toggle-btn" :class="{on: hideUnnamed}"
+          @click="hideUnnamed = !hideUnnamed">{{ t('Hide unnamed') }}</button>
+        <button class="toggle-btn" :class="{on: hideBots}"
+          @click="hideBots = !hideBots">{{ t('Hide bots') }}</button>
+        <button class="toggle-btn" :class="{on: chartMode === 'bar'}"
+          @click="chartMode = chartMode === 'bar' ? 'line' : 'bar'">{{ t('Bar chart') }}</button>
+        <select :value="effectiveXAxisMode" class="select-sm" :disabled="chartMode === 'bar'"
+          :data-tooltip="chartMode === 'bar' ? t('Bar chart always uses game number') : null"
+          @change="xAxisMode = $event.target.value">
+          <option value="time">{{ t('X: Time') }}</option>
+          <option value="index">{{ t('X: Game #') }}</option>
+        </select>
+        <span class="toggle-spacer"></span>
+        <button class="toggle-btn" @click="exportChartImage">{{ t('Export Chart') }}</button>
+        <button class="toggle-btn" @click="exportReportImage">{{ t('Export Report') }}</button>
       </div>
     </div>
-    <div class="stat-card" v-if="relativeStatsData && (relativeStatsData.togetherPairs.length > 0 || relativeStatsData.apartPairs.length > 0)">
-      <div class="stat-card-title">Relative</div>
-      <div v-for="(pair, idx) in relativeStatsData.togetherPairs" :key="'together-' + idx" class="stat-player-row">
-        <div class="stat-color-dot" :style="{background: pair.colorA}"></div>
-        <div class="stat-color-dot" :style="{background: pair.colorB}"></div>
-        <span class="stat-name">{{ pair.nameA }} + {{ pair.nameB }}</span>
-        <span class="stat-value" :data-tooltip="'Played ' + pair.gamesTogether + ' games together'">Together: {{ pair.gamesTogether }}</span>
-        <span class="stat-value" v-if="showWinRate" :data-tooltip="'Win rate together: ' + pair.winRateTogether + '%'">W&#8209;rate: {{ pair.winRateTogether }}%</span>
-      </div>
-      <div v-for="(pair, idx) in relativeStatsData.apartPairs" :key="'apart-' + idx" class="stat-player-row">
-        <div class="stat-color-dot" :style="{background: pair.colorA}"></div>
-        <div class="stat-color-dot" :style="{background: pair.colorB}"></div>
-        <span class="stat-name">{{ pair.nameA }} &#8209; {{ pair.nameB }}</span>
-        <span class="stat-value" :data-tooltip="'Played ' + pair.gamesApart + ' games apart'">Apart: {{ pair.gamesApart }}</span>
-        <span class="stat-value" v-if="showWinRate" :data-tooltip="'Win rate apart: ' + pair.winRateApart + '%'">W&#8209;rate: {{ pair.winRateApart }}%</span>
+    <div class="right-content">
+      <!-- Chart -->
+      <div class="chart-container">
+        <canvas ref="chartCanvas"></canvas>
+        <div id="chart-tooltip" style="opacity:0"></div>
+        <div v-if="!dbReady" class="chart-overlay">{{ t('Initializing database...') }}</div>
+        <div v-else-if="loading" class="chart-overlay">{{ t('Loading...') }}</div>
+        <div v-else-if="ingesting" class="chart-overlay">{{ t('Importing...') }}</div>
+        <div v-else-if="gameCountDisplay === 0" class="chart-overlay">{{ t('Choose the Scoreboard mod history directory to get started') }}</div>
+        <div v-else-if="games.length === 0" class="chart-overlay">{{ t('No data') }}</div>
       </div>
     </div>
-    <div class="stat-card" v-for="stat in statsData" :key="stat.propertyId">
-      <div class="stat-card-title">
-        {{ stat.propertyName }}
-        <span class="stat-card-close" role="button" aria-label="Remove property"
-          @click="removeProperty(stat.propertyId)">&times;</span>
-      </div>
-      <div v-for="(playerStat, idx) in stat.players" :key="playerStat.playerId + '-' + idx"
-        :class="['stat-player-row', { 'stat-sub-row': playerStat._isSubName }]">
-        <div class="stat-color-dot" :style="{background: playerStat._isSubName ? playerStat._parentColor : playerStat.color}"></div>
-        <span class="stat-name">{{ playerStat.name }}</span>
-        <span class="stat-value">Avg: {{ formatNum(playerStat.average) }}</span>
-        <span class="stat-value stat-top-in"
-          :data-tooltip="'Was in first place in ' + playerStat.bestCount + ' out of ' + playerStat.bestTotal + ' games'">Top in: {{ playerStat.bestPercent }}%</span>
-        <span v-if="!showVsOthers || playerStat.isMain"
-          class="stat-value" :class="deviationClass(playerStat.deviation, stat.sortAscending)"
-          :data-tooltip="'Was summarily ' + Math.abs(playerStat.deviation).toFixed(1) + '% ' + (deviationClass(playerStat.deviation, stat.sortAscending) === 'positive' ? 'better' : 'worse') + ' than average'">
-          Avg dev: {{ playerStat.deviation >= 0 ? '+' : '' }}{{ playerStat.deviation.toFixed(1) }}%
-        </span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Graph toggles -->
-  <div class="graph-toggles" v-if="dbReady">
-    <button class="toggle-btn" :class="{on: perName}"
-      @click="perName = !perName">Per name</button>
-    <button class="toggle-btn" :class="{on: normalizePerMinute}"
-      @click="normalizePerMinute = !normalizePerMinute">Per minute</button>
-    <span class="toggle-spacer"></span>
-    <button class="toggle-btn" :class="{on: showVsAverage}"
-      data-tooltip="Compare everyone to the whole team's average."
-      @click="showVsAverage = !showVsAverage; if(showVsAverage) showVsOthers = false">vs Average</button>
-    <button class="toggle-btn" :class="{on: showVsOthers}"
-      :disabled="!hasMainPlayer"
-      :data-tooltip="!hasMainPlayer ? 'Set a main player first' : 'Compare the main player to the average of the others.'"
-      @click="showVsOthers = !showVsOthers; if(showVsOthers) showVsAverage = false">vs Others</button>
-    <button class="toggle-btn" :class="{on: hideUnnamed}"
-      @click="hideUnnamed = !hideUnnamed">Hide unnamed</button>
-    <button class="toggle-btn" :class="{on: hideBots}"
-      @click="hideBots = !hideBots">Hide bots</button>
-    <button class="toggle-btn" :class="{on: chartMode === 'bar'}"
-      @click="chartMode = chartMode === 'bar' ? 'line' : 'bar'">Bar chart</button>
-    <select :value="effectiveXAxisMode" class="select-sm" :disabled="chartMode === 'bar'"
-      :data-tooltip="chartMode === 'bar' ? 'Bar chart always uses game number' : null"
-      @change="xAxisMode = $event.target.value">
-      <option value="time">X: Time</option>
-      <option value="index">X: Game #</option>
-    </select>
-  </div>
-
-  <!-- Chart -->
-  <div class="chart-container">
-    <canvas ref="chartCanvas"></canvas>
-    <div id="chart-tooltip" style="opacity:0"></div>
-    <div v-if="!dbReady" class="chart-overlay">Initializing database...</div>
-    <div v-else-if="loading" class="chart-overlay">Loading...</div>
-    <div v-else-if="ingesting" class="chart-overlay">Importing...</div>
-    <div v-else-if="gameCountDisplay === 0" class="chart-overlay">Choose the Scoreboard mod history directory to get started</div>
-    <div v-else-if="games.length === 0" class="chart-overlay">No data</div>
   </div>
 
   <!-- Footer -->
   <div class="app-footer">
-    <span>&copy; Darktide Scoreboard Tracker - Licensed under <a href="https://polyformproject.org/licenses/noncommercial/1.0.0" target="_blank" rel="noopener">PolyForm Noncommercial 1.0.0</a></span>
-    <span>Contribute on <a href="https://github.com/pawelszydlo/darktide-scoreboard-tracker" target="_blank" rel="noopener">GitHub</a></span>
+    <span>{{ t('© Darktide Scoreboard Tracker - Licensed under') }} <a href="https://polyformproject.org/licenses/noncommercial/1.0.0" target="_blank" rel="noopener">{{ t('PolyForm Noncommercial 1.0.0') }}</a></span>
+    <span>{{ t('Contribute on') }} <a href="https://github.com/pawelszydlo/darktide-scoreboard-tracker" target="_blank" rel="noopener">{{ t('GitHub') }}</a></span>
   </div>
 
   <!-- Player management dialog -->
@@ -327,13 +351,13 @@
     @click.self="showPlayerDialog = false">
     <div class="modal" role="dialog" aria-modal="true" aria-label="Player Management">
       <div class="modal-header">
-        <h2>Player Management</h2>
+        <h2>{{ t('Player Management') }}</h2>
         <button @click="showPlayerDialog = false">&times;</button>
       </div>
       <div class="modal-toolbar">
-        <span class="label-text">Min games:</span>
+        <span class="label-text">{{ t('Min games:') }}</span>
         <input type="number" v-model.number="minGamesFilter" min="1" max="1000" class="input-sm">
-        <span class="label-text ml-auto">{{ humanPlayers.length }} players shown</span>
+        <span class="label-text ml-auto">{{ humanPlayers.length }} {{ t('players shown') }}</span>
       </div>
       <div v-for="player in humanPlayers" :key="player.id" class="player-row">
         <input type="color"
@@ -342,20 +366,20 @@
         <input type="text"
           :value="playerEdits[player.id]?.customName || ''"
           @input="updatePlayerEdit(player.id, 'customName', $event.target.value)"
-          placeholder="Custom name">
+          :placeholder="t('Custom name')">
         <div class="player-names" :data-tooltip="player.names.join(', ')">
           {{ player.names.join(', ') }}
         </div>
-        <span class="game-count-badge">{{ player.gameCount }} games</span>
+        <span class="game-count-badge">{{ player.gameCount }} {{ t('games') }}</span>
         <button class="btn-sm" @click="savePlayerSettings(player.id)"
-          :disabled="!playerEdits[player.id]?.customName">Save</button>
+          :disabled="!playerEdits[player.id]?.customName">{{ t('Save') }}</button>
         <button class="btn-sm"
           v-if="player.customName || player.color"
-          @click="clearPlayerSettings(player.id)">Clear</button>
+          @click="clearPlayerSettings(player.id)">{{ t('Clear') }}</button>
         <button
           :class="['btn-sm', 'btn-main-player', { active: player.isMain }]"
           :disabled="player.isMain || !(player.customName || player.color)"
-          @click="setMainPlayer(player.id)">{{ player.isMain ? 'Main' : 'Set Main' }}</button>
+          @click="setMainPlayer(player.id)">{{ player.isMain ? t('Main') : t('Set Main') }}</button>
       </div>
     </div>
   </div>

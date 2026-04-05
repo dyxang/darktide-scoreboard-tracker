@@ -20,6 +20,10 @@ const {
   computeGameMean, computeGameMeanExcluding, precomputeGameBests, debounce,
 } = App;
 
+const {
+  t, setLanguage, getLanguage,
+} = App.i18n;
+
 const { MultiSelect } = App;
 
 const {
@@ -98,14 +102,14 @@ function useFilters() {
   });
 
   const selectedPropertyNames = computed(() => {
-    if (selectedPropertyIds.value.length === 0) return 'Select property...';
+    if (selectedPropertyIds.value.length === 0) return t('Select property...');
     return selectedPropertyIds.value
       .map(id => propertyMap.value[id]?.displayName || id)
       .join(', ');
   });
 
   const difficultyLabel = computed(() => {
-    if (selectedDifficulties.value.length === availableDifficulties.value.length) return 'All';
+    if (selectedDifficulties.value.length === availableDifficulties.value.length) return t('All');
     if (selectedDifficulties.value.length === 0) return 'None';
     return selectedDifficulties.value
       .map(id => difficultyNames.value[id] || id)
@@ -113,13 +117,13 @@ function useFilters() {
   });
 
   const missionLabel = computed(() => {
-    if (selectedMissions.value.length === availableMissions.value.length) return 'All';
+    if (selectedMissions.value.length === availableMissions.value.length) return t('All');
     if (selectedMissions.value.length === 0) return 'None';
     return `${selectedMissions.value.length} selected`;
   });
 
   const modifierLabel = computed(() => {
-    if (selectedModifiers.value.length === availableModifiers.value.length) return 'All';
+    if (selectedModifiers.value.length === availableModifiers.value.length) return t('All');
     if (selectedModifiers.value.length === 0) return 'None';
     return `${selectedModifiers.value.length} selected`;
   });
@@ -275,7 +279,7 @@ function useFilters() {
     } catch (error) {
       console.error('Failed to load games:', error);
       games.value = [];
-      errorMessage.value = 'Failed to load game data.';
+      errorMessage.value = t('Failed to load game data.');
     }
     loading.value = false;
     loadGeneration.value++;
@@ -829,7 +833,7 @@ function useChart({ games, selectedPropertyIds, resultFilter, loading, loadGener
   }
 
   watch(
-    [loadGeneration, normalizePerMinute, showVsAverage, showVsOthers, hideUnnamed, hideBots, chartMode, xAxisMode, perName, trackedPlayers],
+    [loadGeneration, normalizePerMinute, showVsAverage, showVsOthers, hideUnnamed, hideBots, chartMode, xAxisMode, perName, trackedPlayers, playerSettingsMap],
     () => {
       if (loading.value) return;
       nextTick(renderChart);
@@ -846,12 +850,70 @@ function useChart({ games, selectedPropertyIds, resultFilter, loading, loadGener
     return (sortAscending ? deviation >= 0 : deviation <= 0) ? 'positive' : 'negative';
   }
 
+  async function exportChart(playerName) {
+    try {
+      const chartContainer = document.querySelector('.chart-container');
+      if (!chartContainer) {
+        alert(t('Export failed') + ': ' + t('No data'));
+        return;
+      }
+
+      // Use html2canvas to capture the chart container
+      const canvas = await html2canvas(chartContainer, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#1c1c22'
+      });
+
+      const link = document.createElement('a');
+      const date = new Date().toISOString().split('T')[0];
+      const safePlayerName = (playerName || 'unknown').replace(/[^a-zA-Z0-9\u4e00-\u9fa5_-]/g, '_');
+      link.download = `darktide-report-${safePlayerName}-${date}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Export chart failed:', error);
+      alert(t('Export failed') + ': ' + t('Please try again'));
+    }
+  }
+
   return {
     chartCanvas, normalizePerMinute, showVsAverage, showVsOthers, hasMainPlayer,
     hideUnnamed, hideBots,
     chartMode, xAxisMode, effectiveXAxisMode, perName, hiddenLegendProperties,
     showWinRate, showStreaks, generalStatsData, relativeStatsData, statsData,
-    renderChart, restoreChartSettings, deviationClass,
+    renderChart, restoreChartSettings, deviationClass, exportChart, chartInstance,
+  };
+}
+
+/** Composable: language management, selection, and persistence. */
+function useLanguage() {
+  const currentLanguage = ref('en');
+  const languageChanged = ref(0);
+
+  function loadLanguage() {
+    try {
+      const saved = getAppSetting('language');
+      if (saved && (saved === 'en' || saved === 'zh')) {
+        currentLanguage.value = saved;
+        setLanguage(saved);
+      }
+    } catch { /* ignore */ }
+  }
+
+  function changeLanguage(lang) {
+    if (setLanguage(lang)) {
+      currentLanguage.value = lang;
+      saveAppSetting('language', lang);
+      languageChanged.value++;
+    }
+  }
+
+  return {
+    currentLanguage,
+    loadLanguage,
+    changeLanguage,
+    languageChanged,
   };
 }
 
@@ -871,17 +933,17 @@ function useIngestion() {
 
   async function doIngest(source, onComplete) {
     ingesting.value = true;
-    ingestProgress.value = 'Starting ingestion...';
+    ingestProgress.value = t('Starting ingestion...');
     try {
       const result = await ingestFiles(source, (current, total, msg) => {
         ingestProgress.value = msg;
       });
       if (result.ingested > 0) autoSetupDefaultPlayer();
       if (onComplete) onComplete();
-      ingestProgress.value = `Done: ${result.ingested} new games ingested (${result.total} total files).`;
+      ingestProgress.value = `${t('Done:')} ${result.ingested} ${t('new games ingested')} (${result.total} ${t('total files')}).`;
     } catch (e) {
       console.error('Ingestion error:', e);
-      ingestProgress.value = 'Ingestion failed: ' + e.message;
+      ingestProgress.value = t('Ingestion failed:') + ' ' + e.message;
     }
     ingesting.value = false;
   }
@@ -930,7 +992,7 @@ function useIngestion() {
   }
 
   async function resetDB(onComplete) {
-    if (!confirm('This will delete all imported data. Continue?')) return;
+    if (!confirm(t('This will delete all imported data. Continue?'))) return;
     await clearDatabase();
     if (onComplete) onComplete();
   }
@@ -948,6 +1010,23 @@ const app = createApp({
     const filters = useFilters();
     const playerMgmt = usePlayerManagement();
     const ingestion = useIngestion();
+    const language = useLanguage();
+    
+    const layoutMode = ref('vertical');
+    
+    function loadLayout() {
+      try {
+        const saved = getAppSetting('layout_mode');
+        if (saved && (saved === 'vertical' || saved === 'horizontal')) {
+          layoutMode.value = saved;
+        }
+      } catch { /* ignore */ }
+    }
+    
+    function changeLayout(mode) {
+      layoutMode.value = mode;
+      saveAppSetting('layout_mode', mode);
+    }
 
     const chart = useChart({
       games: filters.games,
@@ -962,12 +1041,99 @@ const app = createApp({
 
     function groupColor(groupId) { return GROUP_COLORS[groupId] || '#888'; }
 
+    function getMainPlayerName() {
+      const mainPlayer = playerMgmt.trackedPlayers.value.find(p => p.isMain);
+      if (mainPlayer) {
+        return mainPlayer.customName || mainPlayer.names[0] || 'unknown';
+      }
+      return 'unknown';
+    }
+
+    async function exportChartImage() {
+      const playerName = getMainPlayerName();
+      await chart.exportChart(playerName);
+    }
+
+    async function exportReportImage() {
+      try {
+        const playerName = getMainPlayerName();
+        
+        // Get elements to capture
+        const ingestBar = document.querySelector('.ingest-bar');
+        const controls = document.querySelector('.controls');
+        const statsBox = document.querySelector('.stats-box');
+        
+        if (!ingestBar || !controls || !statsBox) {
+          alert(t('Export failed') + ': ' + t('No data'));
+          return;
+        }
+
+        // Create a temporary container to hold all elements
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.top = '-9999px';
+        tempContainer.style.width = '100%';
+        tempContainer.style.backgroundColor = '#1c1c22';
+        tempContainer.style.padding = '20px';
+        tempContainer.style.fontFamily = 'sans-serif';
+        document.body.appendChild(tempContainer);
+        
+        // Add title
+        const title = document.createElement('div');
+        title.style.marginBottom = '20px';
+        title.innerHTML = `
+          <h1 style="color: #e0e0e0; font-size: 24px; margin: 0 0 10px 0;">Darktide Scoreboard Report</h1>
+          <p style="color: #e0e0e0; font-size: 14px; margin: 0;">${new Date().toLocaleDateString()}</p>
+        `;
+        tempContainer.appendChild(title);
+        
+        // Clone and append elements
+        const clonedIngestBar = ingestBar.cloneNode(true);
+        const clonedControls = controls.cloneNode(true);
+        const clonedStatsBox = statsBox.cloneNode(true);
+        
+        // Add spacing between elements
+        clonedIngestBar.style.marginBottom = '20px';
+        clonedControls.style.marginBottom = '20px';
+        
+        tempContainer.appendChild(clonedIngestBar);
+        tempContainer.appendChild(clonedControls);
+        tempContainer.appendChild(clonedStatsBox);
+        
+        // Wait for elements to render
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Use html2canvas to capture the temp container
+        const canvas = await html2canvas(tempContainer, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#1c1c22'
+        });
+        
+        // Clean up
+        document.body.removeChild(tempContainer);
+
+        const link = document.createElement('a');
+        const date = new Date().toISOString().split('T')[0];
+        const safePlayerName = playerName.replace(/[^a-zA-Z0-9\u4e00-\u9fa5_-]/g, '_');
+        link.download = `darktide-report-${safePlayerName}-${date}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (error) {
+        console.error('Export report failed:', error);
+        alert(t('Export failed') + ': ' + t('Please try again'));
+      }
+    }
+
     function reloadAll() {
       filters.loadInitialData();
       playerMgmt.loadPlayers();
       playerMgmt.initPlayerEdits();
       playerMgmt.restorePlayerSettings();
       chart.restoreChartSettings();
+      language.loadLanguage();
+      loadLayout();
       // filter watcher handles loadGames via debounced reaction to filter changes
     }
 
@@ -993,7 +1159,7 @@ const app = createApp({
         if (filters.rangeMode.value === 'custom') initFlatpickr();
       } catch (e) {
         console.error('DB init failed:', e);
-        filters.errorMessage.value = 'Failed to initialize database: ' + e.message;
+        filters.errorMessage.value = t('Failed to initialize database:') + ' ' + e.message;
       }
     });
 
@@ -1066,7 +1232,21 @@ const app = createApp({
 
     watch(ingestion.ingesting, (v) => { if (v) showPathHint.value = false; });
 
+    watch(language.languageChanged, () => {
+      filters.loadInitialData();
+    });
+
     return {
+      // ── Language ──
+      currentLanguage: language.currentLanguage,
+      changeLanguage: language.changeLanguage,
+      languageChanged: language.languageChanged,
+      t,
+      
+      // ── Layout ──
+      layoutMode,
+      changeLayout,
+
       // ── Filters ──
       propertyGroups: filters.propertyGroups,
       availableMissions: filters.availableMissions,
@@ -1136,6 +1316,8 @@ const app = createApp({
       renderChart: chart.renderChart,
       restoreChartSettings: chart.restoreChartSettings,
       deviationClass: chart.deviationClass,
+      exportChartImage,
+      exportReportImage,
 
       // ── Ingestion (wrapped with callbacks) ──
       dbReady: ingestion.dbReady,
@@ -1150,7 +1332,7 @@ const app = createApp({
       reingest: () => ingestion.reingest(reloadAll),
       resetDatabase: () => ingestion.resetDB(afterReset),
       resetSettings: async () => {
-        if (!confirm('Reset all settings to defaults?')) return;
+        if (!confirm(t('Reset all settings to defaults?'))) return;
         await clearAppSettings();
         location.reload();
       },

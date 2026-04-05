@@ -16,6 +16,62 @@
   flex: 1;
   min-height: 0;
 }
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.horizontal-layout {
+  flex-direction: row;
+}
+
+.left-content {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+
+.right-content {
+  flex: 2;
+  min-width: 500px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.horizontal-layout .stats-box {
+  flex-shrink: 0;
+  overflow-y: auto;
+  max-height: 50vh;
+}
+
+.left-content .error-banner {
+  flex-shrink: 0;
+}
+
+.left-content .stats-box {
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.main-content:not(.horizontal-layout) .stats-box {
+  flex-shrink: 0;
+  overflow-y: auto;
+  max-height: 40vh;
+}
+
+.left-content .graph-toggles {
+  flex-shrink: 0;
+}
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg);
@@ -24,6 +80,31 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--bg);
 }
 
 /* Ingestion bar */
@@ -307,8 +388,16 @@ button.active { background: var(--accent); }
   min-height: 0;
   padding: 8px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.chart-container canvas { width: 100%; height: 100%; }
+.chart-container canvas { 
+  width: 100% !important; 
+  height: 100% !important; 
+  flex: 1;
+  min-height: 0;
+}
 .chart-overlay {
   position: absolute;
   top: 50%;
